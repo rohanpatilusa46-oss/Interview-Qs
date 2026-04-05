@@ -30,6 +30,8 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+.hidden { display: none !important; }
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -97,6 +99,24 @@ header {
 
 .key-badge:hover { border-color: var(--accent); color: var(--accent2); }
 .key-badge.set { border-color: var(--green); color: var(--green); }
+
+.tool-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border2);
+  color: var(--text3);
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--bg2);
+}
+
+.tool-badge:hover { border-color: var(--accent); color: var(--accent2); }
+
+.tool-badge.active { border-color: var(--amber); color: var(--amber); }
+
+.tool-badge.bookmarked { border-color: var(--green); color: var(--green); }
 
 /* ── MAIN LAYOUT ── */
 .layout {
@@ -334,6 +354,13 @@ header {
   font-size: 10px;
   margin-top: 5px;
   color: var(--text3);
+}
+
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
 }
 
 .panel-close {
@@ -629,6 +656,111 @@ header {
   line-height: 1.5;
 }
 
+.library-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.library-tab {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text3);
+  cursor: pointer;
+}
+
+.library-tab.active { border-color: var(--accent); color: var(--accent2); }
+
+.library-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 45vh;
+  overflow-y: auto;
+}
+
+.library-item {
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.library-item:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+.library-item-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.library-item-sub {
+  font-size: 11px;
+  color: var(--text3);
+  font-family: var(--mono);
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.compare-grid .modal-input {
+  margin-bottom: 0;
+}
+
+.quiz-card {
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+
+.quiz-q {
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.quiz-a {
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  color: var(--text2);
+}
+
+.quiz-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.ghost-btn {
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.ghost-btn:hover { border-color: var(--accent); color: var(--accent2); }
+
 /* ── EMPTY STATE ── */
 .panel-empty {
   flex: 1;
@@ -689,6 +821,27 @@ header {
 </head>
 <body>
 
+<!-- Study Library Modal -->
+<div class="modal-overlay hidden" id="libraryModal">
+  <div class="modal" style="max-width: 760px; width: min(760px, 100%);">
+    <div style="display:flex; align-items:flex-start; gap:12px;">
+      <div style="flex:1; min-width:0;">
+        <div class="modal-title" id="libraryTitle">Study Library</div>
+        <div class="modal-sub" id="librarySub">Saved bookmarks, chat history, quizzes, and concept comparisons.</div>
+      </div>
+      <button class="panel-close" onclick="closeLibrary()">✕</button>
+    </div>
+    <div class="library-tabs">
+      <button class="library-tab active" onclick="openLibraryTab('bookmarks')">Bookmarks</button>
+      <button class="library-tab" onclick="openLibraryTab('history')">Chat History</button>
+      <button class="library-tab" onclick="openLibraryTab('quiz')">Quiz Mode</button>
+      <button class="library-tab" onclick="openLibraryTab('compare')">Compare</button>
+    </div>
+    <div id="libraryBody"></div>
+    <div class="modal-note">All study data stays in your browser via `localStorage`.</div>
+  </div>
+</div>
+
 <!-- Header -->
 <header>
   <div class="logo">
@@ -698,6 +851,11 @@ header {
   <div class="header-right">
     <span class="concept-count" id="headerCount"></span>
     <span class="key-badge" id="keyBadge">API via .env</span>
+    <span class="tool-badge" id="bookmarkBadge" onclick="toggleBookmarkCurrent()">☆ Bookmark</span>
+    <span class="tool-badge" onclick="openLibrary('bookmarks')">Saved</span>
+    <span class="tool-badge" onclick="openLibrary('history')">History</span>
+    <span class="tool-badge" onclick="openLibrary('quiz')">Quiz</span>
+    <span class="tool-badge" onclick="openLibrary('compare')">Compare</span>
   </div>
 </header>
 
@@ -723,6 +881,11 @@ header {
         <div class="panel-topic-label">studying</div>
         <div class="panel-topic-name" id="panelTopic">—</div>
         <div class="panel-domain-tag" id="panelDomain"></div>
+        <div class="panel-actions">
+          <button class="ghost-btn" onclick="toggleBookmarkCurrent()" id="panelBookmarkBtn">Bookmark</button>
+          <button class="ghost-btn" onclick="openLibrary('quiz')">Quiz this topic</button>
+          <button class="ghost-btn" onclick="openLibrary('compare')">Compare</button>
+        </div>
       </div>
       <button class="panel-close" onclick="closePanel()">✕</button>
     </div>
@@ -754,6 +917,19 @@ let currentDomain = '';
 let chatHistory = [];
 let isLoading = false;
 let activeTagEl = null;
+let currentMode = 'chat';
+let currentQuiz = [];
+let activeLibraryTab = 'bookmarks';
+
+const STORAGE_KEYS = {
+  bookmarks: 'mlprep.bookmarks',
+  conversations: 'mlprep.conversations',
+  quizCache: 'mlprep.quizCache',
+};
+
+let bookmarks = loadStoredJSON(STORAGE_KEYS.bookmarks, []);
+let conversations = loadStoredJSON(STORAGE_KEYS.conversations, {});
+let quizCache = loadStoredJSON(STORAGE_KEYS.quizCache, {});
 
 // ── DATA ──
 const data = [
@@ -836,6 +1012,8 @@ const data = [
   ]},
 ];
 
+const topicIndex = buildTopicIndex();
+
 // ── RENDER ──
 function renderAll(filter = '') {
   const q = filter.toLowerCase().trim();
@@ -888,6 +1066,89 @@ function renderAll(filter = '') {
 
 function escStr(s) { return s.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
 
+function loadStoredJSON(key, fallback) {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function persistState() {
+  localStorage.setItem(STORAGE_KEYS.bookmarks, JSON.stringify(bookmarks));
+  localStorage.setItem(STORAGE_KEYS.conversations, JSON.stringify(conversations));
+  localStorage.setItem(STORAGE_KEYS.quizCache, JSON.stringify(quizCache));
+}
+
+function buildTopicIndex() {
+  const index = {};
+  data.forEach(domain => {
+    domain.sections.forEach(section => {
+      section.tags.forEach(tag => {
+        index[tag] = domain.name;
+      });
+    });
+  });
+  return index;
+}
+
+function getConversation(topic) {
+  if (!conversations[topic]) {
+    conversations[topic] = { messages: [], updatedAt: Date.now(), domain: topicIndex[topic] || '' };
+  }
+  return conversations[topic];
+}
+
+function saveConversation(topic, messages) {
+  conversations[topic] = {
+    messages: messages.map(msg => ({ role: msg.role, content: msg.content })),
+    updatedAt: Date.now(),
+    domain: topicIndex[topic] || currentDomain || '',
+  };
+  persistState();
+}
+
+function isBookmarked(topic) {
+  return bookmarks.some(entry => entry.topic === topic);
+}
+
+function updateBookmarkButtons() {
+  const bookmarked = !!currentTopic && isBookmarked(currentTopic);
+  const badge = document.getElementById('bookmarkBadge');
+  const panelBtn = document.getElementById('panelBookmarkBtn');
+  badge.classList.toggle('bookmarked', bookmarked);
+  badge.textContent = bookmarked ? '★ Bookmarked' : '☆ Bookmark';
+  panelBtn.textContent = bookmarked ? 'Remove bookmark' : 'Bookmark';
+}
+
+function updatePanelMeta() {
+  document.getElementById('panelTopic').textContent = currentTopic || '—';
+  document.getElementById('panelDomain').textContent = currentDomain || '';
+  updateBookmarkButtons();
+}
+
+function renderConversation(topic) {
+  const convo = conversations[topic];
+  const msgs = document.getElementById('chatMessages');
+  if (!convo || !convo.messages || !convo.messages.length) {
+    msgs.innerHTML = `<div class="panel-empty" id="panelEmpty"><div class="panel-empty-icon">◈</div><div class="panel-empty-text">Click any concept to begin</div><div class="panel-empty-sub">Tap a tag on the left to get an in-depth explanation, then ask follow-up questions.</div></div>`;
+    return;
+  }
+
+  msgs.innerHTML = '';
+  convo.messages.forEach(message => addMessage(message.role, message.content));
+}
+
+function getTopicLabel(topic) {
+  return topicIndex[topic] || currentDomain || 'Unknown domain';
+}
+
+function saveCurrentConversation() {
+  if (!currentTopic) return;
+  saveConversation(currentTopic, chatHistory);
+}
+
 function toggleDomain(header) {
   const body = header.nextElementSibling;
   const ch = header.querySelector('.domain-chevron');
@@ -903,18 +1164,20 @@ function selectTopic(el, topic, domain) {
 
   currentTopic = topic;
   currentDomain = domain;
-  chatHistory = [];
+  currentMode = 'chat';
+  currentQuiz = quizCache[topic] || [];
+  const convo = getConversation(topic);
+  chatHistory = convo.messages ? convo.messages.map(message => ({ ...message })) : [];
 
-  document.getElementById('panelTopic').textContent = topic;
-  document.getElementById('panelDomain').textContent = domain;
+  updatePanelMeta();
   document.getElementById('panel').classList.add('open');
   document.getElementById('browser').classList.add('panel-open');
 
-  const msgs = document.getElementById('chatMessages');
-  msgs.innerHTML = '';
-
+  renderConversation(topic);
   showSuggestedQs(topic);
-  autoExplain(topic, domain);
+  if (!chatHistory.length) {
+    autoExplain(topic, domain);
+  }
 }
 
 function closePanel() {
@@ -922,6 +1185,9 @@ function closePanel() {
   document.getElementById('browser').classList.remove('panel-open');
   if (activeTagEl) { activeTagEl.classList.remove('active'); activeTagEl = null; }
   currentTopic = '';
+  currentDomain = '';
+  chatHistory = [];
+  updatePanelMeta();
 }
 
 // ── SUGGESTED QUESTIONS ──
@@ -945,6 +1211,150 @@ function useSuggested(q) {
   sendMessage();
 }
 
+function toggleBookmarkCurrent() {
+  if (!currentTopic) return;
+  const existingIndex = bookmarks.findIndex(entry => entry.topic === currentTopic);
+  if (existingIndex >= 0) {
+    bookmarks.splice(existingIndex, 1);
+  } else {
+    bookmarks.unshift({ topic: currentTopic, domain: currentDomain || getTopicLabel(currentTopic), savedAt: Date.now() });
+  }
+  persistState();
+  updateBookmarkButtons();
+  if (document.getElementById('libraryModal') && !document.getElementById('libraryModal').classList.contains('hidden')) {
+    renderLibrary();
+  }
+}
+
+function openLibrary(tab = 'bookmarks') {
+  activeLibraryTab = tab;
+  document.getElementById('libraryModal').classList.remove('hidden');
+  renderLibrary();
+}
+
+function closeLibrary() {
+  document.getElementById('libraryModal').classList.add('hidden');
+}
+
+function openLibraryTab(tab) {
+  activeLibraryTab = tab;
+  renderLibrary();
+}
+
+function renderLibrary() {
+  const tabs = document.querySelectorAll('.library-tab');
+  tabs.forEach(btn => btn.classList.toggle('active', btn.textContent.toLowerCase().includes(activeLibraryTab)));
+
+  const body = document.getElementById('libraryBody');
+  if (activeLibraryTab === 'bookmarks') {
+    body.innerHTML = renderBookmarksView();
+    return;
+  }
+  if (activeLibraryTab === 'history') {
+    body.innerHTML = renderHistoryView();
+    return;
+  }
+  if (activeLibraryTab === 'quiz') {
+    body.innerHTML = renderQuizView();
+    return;
+  }
+  if (activeLibraryTab === 'compare') {
+    body.innerHTML = renderCompareView();
+    return;
+  }
+}
+
+function renderBookmarksView() {
+  if (!bookmarks.length) {
+    return `<div class="no-results">No bookmarks yet. Save concepts you want to revisit later.</div>`;
+  }
+  return `<div class="library-list">${bookmarks.map(entry => `
+    <div class="library-item" onclick="jumpToTopic('${escStr(entry.topic)}')">
+      <div class="library-item-title">${entry.topic}</div>
+      <div class="library-item-sub">${entry.domain || getTopicLabel(entry.topic)} · bookmarked</div>
+    </div>
+  `).join('')}</div>`;
+}
+
+function renderHistoryView() {
+  const items = Object.entries(conversations)
+    .filter(([, convo]) => convo.messages && convo.messages.length)
+    .sort((a, b) => (b[1].updatedAt || 0) - (a[1].updatedAt || 0));
+
+  if (!items.length) {
+    return `<div class="no-results">No chat history yet. Open a topic and start asking questions.</div>`;
+  }
+
+  return `<div class="library-list">${items.map(([topic, convo]) => {
+    const lastAssistant = [...convo.messages].reverse().find(msg => msg.role === 'assistant');
+    const preview = lastAssistant ? lastAssistant.content.replace(/\s+/g, ' ').slice(0, 120) : 'Conversation saved.';
+    return `
+      <div class="library-item" onclick="jumpToTopic('${escStr(topic)}')">
+        <div class="library-item-title">${topic}</div>
+        <div class="library-item-sub">${getTopicLabel(topic)} · ${convo.messages.length} messages</div>
+        <div class="library-item-sub">${preview}${preview.length >= 120 ? '…' : ''}</div>
+      </div>
+    `;
+  }).join('')}</div>`;
+}
+
+function renderQuizView() {
+  const hasTopic = !!currentTopic;
+  const quiz = currentTopic ? (currentQuiz.length ? currentQuiz : (quizCache[currentTopic] || [])) : currentQuiz;
+  const quizHtml = quiz.length ? quiz.map((item, index) => `
+    <div class="quiz-card">
+      <div class="quiz-q">Q${index + 1}. ${item.question}</div>
+      <div class="quiz-actions">
+        <button class="ghost-btn" onclick="toggleQuizAnswer(${index})">Show answer</button>
+      </div>
+      <div class="quiz-a hidden" id="quizAnswer${index}">${item.answer}</div>
+    </div>
+  `).join('') : `<div class="no-results">Generate a quiz from the current topic to practice recall.</div>`;
+
+  return `
+    <div class="modal-sub">${hasTopic ? `Practice ${currentTopic} with interview-style questions.` : 'Select a topic first, then generate a quiz.'}</div>
+    <button class="modal-btn" onclick="generateQuizForCurrent()" ${hasTopic ? '' : 'disabled'}>Generate quiz for current topic</button>
+    <div style="height:14px"></div>
+    ${quizHtml}
+  `;
+}
+
+function renderCompareView() {
+  const options = Object.keys(topicIndex).sort().map(topic => `<option value="${escStr(topic)}"></option>`).join('');
+  return `
+    <div class="modal-sub">Compare two concepts side by side with an interview-focused breakdown.</div>
+    <div class="compare-grid">
+      <input class="modal-input" id="compareA" list="conceptOptions" placeholder="First concept" value="${escStr(currentTopic || '')}" />
+      <input class="modal-input" id="compareB" list="conceptOptions" placeholder="Second concept" />
+    </div>
+    <datalist id="conceptOptions">${options}</datalist>
+    <div style="height:14px"></div>
+    <button class="modal-btn" onclick="runComparison()">Compare concepts</button>
+    <div id="compareOutput" style="margin-top:14px"></div>
+  `;
+}
+
+function jumpToTopic(topic) {
+  const domain = getTopicLabel(topic);
+  closeLibrary();
+  const matchingTag = Array.from(document.querySelectorAll('.tag')).find(tag => tag.textContent === topic);
+  if (matchingTag) {
+    matchingTag.click();
+  } else {
+    currentTopic = topic;
+    currentDomain = domain;
+    updatePanelMeta();
+    document.getElementById('panel').classList.add('open');
+    document.getElementById('browser').classList.add('panel-open');
+    renderConversation(topic);
+  }
+}
+
+function toggleQuizAnswer(index) {
+  const el = document.getElementById(`quizAnswer${index}`);
+  if (el) el.classList.toggle('hidden');
+}
+
 // ── AUTO EXPLAIN ──
 async function autoExplain(topic, domain) {
   const systemPrompt = `You are an expert ML/AI interview coach. The user is preparing for a mid-senior ML engineer interview (5 years experience). 
@@ -960,11 +1370,13 @@ Keep it dense but scannable. Use markdown formatting: ## for sections, **bold** 
 
   addMessage('assistant', null, true); // typing indicator
   chatHistory.push({ role: 'user', content: userMsg });
+  saveCurrentConversation();
 
   try {
     const reply = await callOpenAI(systemPrompt, chatHistory);
     chatHistory.push({ role: 'assistant', content: reply });
     replaceLastTypingWithMessage('assistant', reply);
+    saveCurrentConversation();
   } catch(e) {
     replaceLastTypingWithMessage('assistant', null, `Error: ${e.message}`);
   }
@@ -983,6 +1395,7 @@ async function sendMessage() {
 
   addMessage('user', text);
   chatHistory.push({ role: 'user', content: text });
+  saveCurrentConversation();
 
   addMessage('assistant', null, true); // typing
 
@@ -995,6 +1408,7 @@ Be direct, technical, and interview-focused.`;
     const reply = await callOpenAI(systemPrompt, chatHistory);
     chatHistory.push({ role: 'assistant', content: reply });
     replaceLastTypingWithMessage('assistant', reply);
+    saveCurrentConversation();
   } catch(e) {
     replaceLastTypingWithMessage('assistant', null, `Error: ${e.message}`);
   }
@@ -1133,9 +1547,70 @@ function updateSendButtonState() {
   document.getElementById('sendBtn').disabled = !input.value.trim() || isLoading || !currentTopic;
 }
 
+async function generateQuizForCurrent() {
+  if (!currentTopic || isLoading) return;
+  activeLibraryTab = 'quiz';
+  document.getElementById('libraryModal').classList.remove('hidden');
+  document.getElementById('libraryBody').innerHTML = `<div class="no-results">Generating quiz...</div>`;
+
+  const systemPrompt = `You create interview prep quizzes for machine learning concepts. Return valid JSON only as an array of 3 objects with keys question and answer. Keep questions specific, technical, and useful for interviews.`;
+  const userMsg = `Create a quiz for the concept ${currentTopic} in the domain ${currentDomain}. Include concise but high-signal answers.`;
+
+  try {
+    const reply = await callOpenAI(systemPrompt, [{ role: 'user', content: userMsg }]);
+    const parsed = parseQuizResponse(reply);
+    currentQuiz = Array.isArray(parsed) ? parsed : [];
+    if (!currentQuiz.length) throw new Error('Quiz response was empty.');
+    quizCache[currentTopic] = currentQuiz;
+    persistState();
+    renderLibrary();
+  } catch (error) {
+    document.getElementById('libraryBody').innerHTML = `<div class="error-msg">${error.message}</div>`;
+  }
+}
+
+function parseQuizResponse(reply) {
+  const cleaned = reply
+    .replace(/^```json\s*/i, '')
+    .replace(/^```\s*/i, '')
+    .replace(/```\s*$/i, '')
+    .trim();
+
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+    if (arrayMatch) {
+      return JSON.parse(arrayMatch[0]);
+    }
+    throw new Error('Quiz response was not valid JSON.');
+  }
+}
+
+async function runComparison() {
+  const topicA = document.getElementById('compareA').value.trim();
+  const topicB = document.getElementById('compareB').value.trim();
+  if (!topicA || !topicB || topicA === topicB) {
+    document.getElementById('compareOutput').innerHTML = `<div class="error-msg">Pick two different concepts to compare.</div>`;
+    return;
+  }
+
+  document.getElementById('compareOutput').innerHTML = `<div class="no-results">Comparing ${topicA} and ${topicB}...</div>`;
+  const systemPrompt = `You are an expert ML interview coach. Compare two ML concepts in a structured way. Use markdown with headings. Include: high-level difference, when to use each, trade-offs, key interview questions, and common confusion traps.`;
+  const userMsg = `Compare **${topicA}** vs **${topicB}** for interview preparation. Keep it concise but deep.`;
+
+  try {
+    const reply = await callOpenAI(systemPrompt, [{ role: 'user', content: userMsg }]);
+    document.getElementById('compareOutput').innerHTML = `<div class="msg-content">${markdownToHtml(reply)}</div>`;
+  } catch (error) {
+    document.getElementById('compareOutput').innerHTML = `<div class="error-msg">${error.message}</div>`;
+  }
+}
+
 // ── INIT ──
 renderAll();
 updateSendButtonState();
+updateBookmarkButtons();
 </script>
 </body>
 </html>
