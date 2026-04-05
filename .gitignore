@@ -3,6 +3,19 @@
 .env.*
 !.env.example
 
+# Next.js / Node
+node_modules/
+.next/
+out/
+coverage/
+.turbo/
+
+# Package manager
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lockb
+
 # Python artifacts
 __pycache__/
 *.py[cod]
