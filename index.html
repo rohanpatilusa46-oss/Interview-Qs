@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ML Concepts — Interview Prep</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #1a1a24;
+  --bg4: #22222f;
+  --border: #2a2a3a;
+  --border2: #3a3a50;
+  --text: #e8e8f0;
+  --text2: #9090a8;
+  --text3: #5a5a70;
+  --accent: #6c63ff;
+  --accent2: #a78bfa;
+  --accent-glow: rgba(108, 99, 255, 0.15);
+  --green: #10b981;
+  --amber: #f59e0b;
+  --panel-w: 480px;
+  --mono: 'IBM Plex Mono', monospace;
+  --display: 'Syne', sans-serif;
+  --body: 'Inter', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOP BAR ── */
+header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 56px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+  z-index: 10;
+}
+
+.logo {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-dot {
+  width: 8px; height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  box-shadow: 0 0 12px var(--accent);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.concept-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.key-badge {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border2);
+  color: var(--text3);
+  cursor: default;
+  transition: all 0.15s;
+  background: var(--bg2);
+}
+
+.key-badge:hover { border-color: var(--accent); color: var(--accent2); }
+.key-badge.set { border-color: var(--green); color: var(--green); }
+
+/* ── MAIN LAYOUT ── */
+.layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── LEFT: CONCEPT BROWSER ── */
+.browser {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+  transition: margin-right 0.3s cubic-bezier(0.4,0,0.2,1);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+
+.browser.panel-open {
+  margin-right: var(--panel-w);
+}
+
+.search-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  padding-bottom: 16px;
+  margin-bottom: 4px;
+}
+
+.search-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0 14px;
+  transition: border-color 0.15s;
+}
+
+.search-inner:focus-within { border-color: var(--accent); }
+
+.search-icon {
+  color: var(--text3);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 10px 0;
+}
+
+.search-input::placeholder { color: var(--text3); }
+
+.search-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+  white-space: nowrap;
+}
+
+/* ── DOMAIN ── */
+.domain {
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.domain:hover { border-color: var(--border2); }
+
+.domain-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  cursor: pointer;
+  background: var(--bg2);
+  user-select: none;
+  transition: background 0.15s;
+}
+
+.domain-header:hover { background: var(--bg3); }
+
+.domain-color {
+  width: 3px;
+  height: 20px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.domain-name {
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.01em;
+  flex: 1;
+}
+
+.domain-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 3px;
+  background: rgba(108,99,255,0.15);
+  color: var(--accent2);
+  border: 1px solid rgba(108,99,255,0.25);
+}
+
+.domain-count {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text3);
+}
+
+.domain-chevron {
+  color: var(--text3);
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.domain-chevron.open { transform: rotate(90deg); }
+
+.domain-body { display: none; padding: 12px 16px 16px; background: var(--bg); }
+.domain-body.open { display: block; }
+
+/* ── SECTION ── */
+.section { margin-bottom: 14px; }
+.section:last-child { margin-bottom: 0; }
+
+.section-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  padding-left: 2px;
+}
+
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  color: var(--text2);
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--bg2);
+  line-height: 1.4;
+}
+
+.tag:hover {
+  border-color: var(--accent);
+  color: var(--accent2);
+  background: var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+.tag.active {
+  border-color: var(--accent);
+  color: var(--accent2);
+  background: rgba(108,99,255,0.2);
+}
+
+.tag.highlight {
+  border-color: var(--amber);
+  color: var(--amber);
+  background: rgba(245,158,11,0.1);
+}
+
+/* ── RIGHT PANEL ── */
+.panel {
+  position: fixed;
+  right: 0; top: 56px; bottom: 0;
+  width: var(--panel-w);
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+  z-index: 20;
+}
+
+.panel.open {
+  transform: translateX(0);
+}
+
+.panel-header {
+  flex-shrink: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.panel-topic-info { flex: 1; min-width: 0; }
+
+.panel-topic-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+
+.panel-topic-name {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.panel-domain-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  margin-top: 5px;
+  color: var(--text3);
+}
+
+.panel-close {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.panel-close:hover { border-color: var(--border2); color: var(--text); }
+
+/* ── CHAT AREA ── */
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+
+.msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  animation: msgIn 0.2s ease;
+}
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.msg-role {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.msg-role.user-role { color: var(--accent2); }
+
+.msg-content {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text);
+  font-weight: 300;
+}
+
+.msg-content.user-content {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 13px;
+  font-size: 13px;
+}
+
+/* Markdown-like rendering */
+.msg-content h1, .msg-content h2, .msg-content h3 {
+  font-family: var(--display);
+  font-weight: 600;
+  color: var(--text);
+  margin: 14px 0 6px;
+}
+
+.msg-content h1 { font-size: 16px; }
+.msg-content h2 { font-size: 14px; color: var(--accent2); }
+.msg-content h3 { font-size: 13px; color: var(--text2); }
+
+.msg-content p { margin-bottom: 10px; }
+.msg-content p:last-child { margin-bottom: 0; }
+
+.msg-content ul, .msg-content ol {
+  padding-left: 18px;
+  margin-bottom: 10px;
+}
+
+.msg-content li { margin-bottom: 4px; font-size: 13px; }
+
+.msg-content code {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--accent2);
+}
+
+.msg-content pre {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 14px;
+  overflow-x: auto;
+  margin: 10px 0;
+}
+
+.msg-content pre code {
+  background: none; border: none; padding: 0;
+  font-size: 12px; color: var(--text2);
+}
+
+.msg-content strong { color: var(--text); font-weight: 500; }
+.msg-content em { color: var(--text2); font-style: italic; }
+
+.msg-content blockquote {
+  border-left: 2px solid var(--accent);
+  padding-left: 12px;
+  color: var(--text2);
+  margin: 8px 0;
+  font-style: italic;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 4px 0;
+}
+
+.typing-dot {
+  width: 5px; height: 5px;
+  background: var(--text3);
+  border-radius: 50%;
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-5px); opacity: 1; }
+}
+
+/* ── CHAT INPUT ── */
+.chat-input-area {
+  flex-shrink: 0;
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  background: var(--bg2);
+}
+
+.suggested-qs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.suggested-q {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 4px 9px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--text3);
+  cursor: pointer;
+  transition: all 0.15s;
+  background: var(--bg3);
+}
+
+.suggested-q:hover {
+  border-color: var(--accent);
+  color: var(--accent2);
+}
+
+.input-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.chat-textarea {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 13px;
+  padding: 10px 13px;
+  resize: none;
+  outline: none;
+  min-height: 42px;
+  max-height: 120px;
+  line-height: 1.5;
+  transition: border-color 0.15s;
+}
+
+.chat-textarea:focus { border-color: var(--accent); }
+.chat-textarea::placeholder { color: var(--text3); }
+
+.send-btn {
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  width: 42px; height: 42px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  font-size: 16px;
+}
+
+.send-btn:hover { background: var(--accent2); transform: scale(1.05); }
+.send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* ── API STATUS BADGE ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+
+.modal-overlay.hidden { display: none; }
+
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 32px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.modal-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.modal-sub {
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.modal-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 11px 13px;
+  outline: none;
+  margin-bottom: 14px;
+  transition: border-color 0.15s;
+}
+
+.modal-input:focus { border-color: var(--accent); }
+
+.modal-btn {
+  width: 100%;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: 14px;
+  padding: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.modal-btn:hover { background: var(--accent2); }
+
+.modal-note {
+  font-size: 11px;
+  color: var(--text3);
+  margin-top: 12px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── EMPTY STATE ── */
+.panel-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  gap: 12px;
+}
+
+.panel-empty-icon {
+  font-size: 32px;
+  opacity: 0.3;
+}
+
+.panel-empty-text {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text2);
+}
+
+.panel-empty-sub {
+  font-size: 12px;
+  color: var(--text3);
+  line-height: 1.6;
+  max-width: 280px;
+}
+
+/* ── NO RESULTS ── */
+.no-results {
+  text-align: center;
+  padding: 40px;
+  color: var(--text3);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* ── ERROR MSG ── */
+.error-msg {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: #f87171;
+  background: rgba(248,113,113,0.1);
+  border: 1px solid rgba(248,113,113,0.2);
+  border-radius: 6px;
+  padding: 10px 12px;
+  line-height: 1.5;
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    ML Interview Prep
+  </div>
+  <div class="header-right">
+    <span class="concept-count" id="headerCount"></span>
+    <span class="key-badge" id="keyBadge">API via .env</span>
+  </div>
+</header>
+
+<!-- Main Layout -->
+<div class="layout">
+
+  <!-- Left: Concept Browser -->
+  <div class="browser" id="browser">
+    <div class="search-wrap">
+      <div class="search-inner">
+        <span class="search-icon">⌕</span>
+        <input class="search-input" id="searchInput" placeholder="search concepts..." oninput="filterAll(this.value)">
+        <span class="search-count" id="searchCount"></span>
+      </div>
+    </div>
+    <div id="domains"></div>
+  </div>
+
+  <!-- Right: Chat Panel -->
+  <div class="panel" id="panel">
+    <div class="panel-header">
+      <div class="panel-topic-info">
+        <div class="panel-topic-label">studying</div>
+        <div class="panel-topic-name" id="panelTopic">—</div>
+        <div class="panel-domain-tag" id="panelDomain"></div>
+      </div>
+      <button class="panel-close" onclick="closePanel()">✕</button>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="panel-empty" id="panelEmpty">
+        <div class="panel-empty-icon">◈</div>
+        <div class="panel-empty-text">Click any concept to begin</div>
+        <div class="panel-empty-sub">Tap a tag on the left to get an in-depth explanation, then ask follow-up questions.</div>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="suggested-qs" id="suggestedQs"></div>
+      <div class="input-row">
+        <textarea class="chat-textarea" id="chatInput" placeholder="Ask a follow-up..." rows="1"
+          onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>↑</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── STATE ──
+let currentTopic = '';
+let currentDomain = '';
+let chatHistory = [];
+let isLoading = false;
+let activeTagEl = null;
+
+// ── DATA ──
+const data = [
+  { name: "Mathematics & Statistics", color: "#7F77DD", sections: [
+    { title: "Linear Algebra", tags: ["Vectors & matrices","Eigenvalues & eigenvectors","SVD","LU / QR / Cholesky decomposition","Dot product & cosine similarity","Matrix rank & null space","Orthogonality & projections","Determinants","Tensors & tensor operations","Frobenius norm"] },
+    { title: "Calculus & Optimization", tags: ["Partial derivatives","Chain rule","Gradient & Hessian","Jacobian matrix","Taylor expansion","Convex vs non-convex functions","Lagrange multipliers","Saddle points","Constrained optimization","Numerical methods (Newton's, gradient descent variants)"] },
+    { title: "Probability & Statistics", tags: ["Bayes' theorem","Conditional probability","MLE & MAP","Gaussian / Bernoulli / Poisson / Beta / Dirichlet distributions","Expectation, variance, covariance","Law of large numbers","Central limit theorem","Hypothesis testing & p-values","Confidence intervals","KL divergence","Jensen-Shannon divergence","Information theory & entropy","Monte Carlo methods","Markov chains"] },
+  ]},
+  { name: "Classical ML", color: "#1D9E75", sections: [
+    { title: "Supervised Learning", tags: ["Linear regression","Logistic regression","SVM & kernel trick","Decision trees","Random forest","Gradient boosting (XGBoost, LightGBM, CatBoost)","k-NN","Naive Bayes","Ridge, Lasso, Elastic net","Isotonic regression"] },
+    { title: "Unsupervised Learning", tags: ["k-Means","Hierarchical clustering","DBSCAN","HDBSCAN","PCA","t-SNE","UMAP","Gaussian Mixture Models","ICA","Sparse autoencoders","Anomaly detection (Isolation Forest, LOF)"] },
+    { title: "Model Evaluation", tags: ["Bias-variance tradeoff","Cross-validation (k-fold, stratified, LOOCV, time-series split)","Accuracy, precision, recall, F1","ROC-AUC & PR-AUC","Confusion matrix","Log loss / cross-entropy","RMSE, MAE, MAPE","Calibration curves & Platt scaling","Imbalanced class handling (SMOTE, class weights, threshold tuning)","Multiple testing correction"] },
+    { title: "Feature Engineering", tags: ["Feature selection (filter, wrapper, embedded)","Normalization & standardization","One-hot & ordinal encoding","Target encoding","Feature interaction & polynomial features","Imputation strategies","Dimensionality reduction","SHAP & permutation importance","Feature stores concept"] },
+  ]},
+  { name: "Deep Learning", color: "#D85A30", sections: [
+    { title: "Fundamentals", tags: ["Backpropagation","Activation functions (ReLU, GELU, Swish, SiLU, Mish)","Weight initialization (Xavier, He, orthogonal)","Vanishing & exploding gradients","Batch / Layer / Group / RMS normalization","Dropout & DropPath","Universal approximation theorem","Inductive bias"] },
+    { title: "Architectures", tags: ["MLP","CNN (ResNet, EfficientNet, ConvNeXt, DenseNet)","RNN / LSTM / GRU","Seq2Seq + attention","Transformer (encoder, decoder, encoder-decoder)","Vision Transformer (ViT, DeiT, Swin)","U-Net","GAN / VAE","Diffusion models","Graph Neural Networks (GCN, GAT, GraphSAGE)","Mixture of Experts (MoE)","State Space Models (Mamba, S4)","Hyena / RWKV","Perceiver / cross-attention architectures"] },
+    { title: "Training Tricks", tags: ["SGD + momentum","Adam, AdaGrad, RMSProp, Lion","Learning rate schedules (cosine, warmup, cyclic, OneCycleLR)","Gradient clipping","Label smoothing","Mixup & CutMix","Stochastic depth","EMA of weights","Curriculum learning","Data-efficient training"] },
+    { title: "Distributed Training", tags: ["Data parallelism (DDP)","Model parallelism (tensor, pipeline)","ZeRO (Stage 1/2/3)","FSDP","DeepSpeed","Megatron-LM","Gradient checkpointing","Mixed precision (fp16, bf16)","Activation checkpointing","AllReduce, AllGather collectives","Interleaved pipeline scheduling"] },
+  ]},
+  { name: "LLM Architecture & Training", color: "#185FA5", isNew: true, sections: [
+    { title: "Transformer Internals", tags: ["Multi-head self-attention","Causal masking","Positional encoding (sinusoidal, RoPE, ALiBi, YaRN)","KV cache mechanics","Grouped Query Attention (GQA)","Multi-Query Attention (MQA)","Sliding window attention","Flash Attention 1/2/3","Sparse attention patterns","Cross-attention"] },
+    { title: "Pretraining", tags: ["Next token prediction (CLM)","Masked Language Modeling (MLM)","Denoising objectives (T5-style)","MoE routing (top-k, expert capacity)","Scaling laws (Chinchilla, Kaplan)","Data deduplication & quality filtering","Tokenizer design (BPE, WordPiece, Unigram, SentencePiece)","Context length extension (RoPE scaling, YaRN, LongRoPE)","Long-context pretraining"] },
+    { title: "Fine-tuning & Alignment", tags: ["Supervised Fine-Tuning (SFT)","Instruction tuning","Chat templates & special tokens","RLHF","DPO","ORPO","SimPO","IPO","KTO","Constitutional AI","RLAIF","Rejection sampling fine-tuning","Catastrophic forgetting","LoRA","QLoRA","DoRA","LoftQ","IA3","Adapter layers","Prefix tuning","Prompt tuning"] },
+    { title: "Evaluation", tags: ["Perplexity","BLEU, ROUGE, METEOR","BERTScore","LLM-as-a-judge","MT-Bench","MMLU","HumanEval","GSM8K","MATH benchmark","Hallucination metrics","AlpacaEval","TruthfulQA"] },
+  ]},
+  { name: "LLM Inference & Serving", color: "#0F6E56", isNew: true, sections: [
+    { title: "KV Cache", tags: ["KV cache mechanics (key/value storage per layer)","KV cache memory footprint formula","Paged attention (vLLM)","Prefix caching / prompt caching","KV cache quantization","Streaming KV offload to CPU/disk","Shared prefix KV cache","Radix tree-based KV cache (SGLang)","KV cache for MoE models","Multi-turn KV reuse"] },
+    { title: "Quantization", tags: ["Post-training quantization (PTQ)","Quantization-aware training (QAT)","INT8 / INT4 / FP8","GPTQ","AWQ (Activation-aware Weight Quantization)","SmoothQuant","GGUF / llama.cpp formats","Weight-only vs activation quantization","Mixed precision quantization","KV cache quantization"] },
+    { title: "Batching & Scheduling", tags: ["Static batching","Continuous batching","Dynamic batching","Chunked prefill","Prefill-decode disaggregation","Speculative decoding","Medusa heads","EAGLE speculative decoding","Lookahead decoding","Batch size vs latency vs throughput tradeoffs"] },
+    { title: "Decoding Strategies", tags: ["Greedy decoding","Beam search","Top-k sampling","Top-p (nucleus) sampling","Min-p sampling","Temperature scaling","Repetition penalty","Constrained decoding (grammar-based, outlines, LMQL)","Structured output (JSON mode)","Logit bias"] },
+    { title: "Inference Frameworks", tags: ["vLLM","TensorRT-LLM","SGLang","llama.cpp","Ollama","Triton Inference Server","TorchServe","ONNX Runtime","ExLlamaV2","MLC-LLM","Hugging Face TGI"] },
+    { title: "Performance & Hardware", tags: ["GPU memory bandwidth vs compute bound","Roofline model for LLM inference","Tensor parallelism for inference","Time to first token (TTFT)","Time per output token (TPOT)","Throughput (tokens/sec)","SLO-aware serving","Flash Decoding","Tensor cores & CUDA kernels","Multi-instance GPU (MIG)"] },
+  ]},
+  { name: "AI Agents & Agentic Systems", color: "#993556", isNew: true, sections: [
+    { title: "Agent Foundations", tags: ["ReAct (Reason + Act)","Chain-of-Thought (CoT)","Tree of Thoughts (ToT)","Self-consistency","Reflexion (self-critique loop)","Plan-and-execute","LATS (LLM-augmented tree search)","Scratchpad & inner monologue","Agent loop (observe → think → act)","Task decomposition"] },
+    { title: "Tool Use & Function Calling", tags: ["Function calling (OpenAI spec)","Tool schemas (JSON Schema)","Parallel tool calls","Structured output for tools","Tool selection & routing","Code interpreter","Web search tool","Error handling & retry in tool loops"] },
+    { title: "Memory Systems", tags: ["In-context memory (prompt window)","External memory (vector DB retrieval)","Episodic memory","Semantic memory","Procedural memory","Working memory management","Memory compression & summarization","Cross-session persistence","Mem0 / MemGPT patterns"] },
+    { title: "Multi-Agent Systems", tags: ["Orchestrator-worker pattern","Hierarchical agents","Agent debate","Agent specialization & roles","Shared state management","Agent handoff","Parallelism across agents","Consensus & voting mechanisms","Agent evaluation & monitoring"] },
+    { title: "Agent Protocols & Standards", tags: ["MCP (Model Context Protocol)","MCP server / client / host architecture","MCP tools, resources, prompts primitives","MCP transport (stdio, SSE, HTTP)","A2A (Agent-to-Agent Protocol)","A2A agent cards & capability discovery","A2A task lifecycle (submitted → working → completed)","AUI / AIUI (Agent User Interface)","OpenAI Assistants API","Anthropic tool use API"] },
+    { title: "Agentic Frameworks", tags: ["LangChain / LangGraph","LlamaIndex","AutoGen (Microsoft)","CrewAI","Semantic Kernel","DSPy","Pydantic AI","Smolagents (HuggingFace)","OpenAI Swarm","Phidata"] },
+    { title: "Safety & Reliability", tags: ["Prompt injection attacks","Indirect prompt injection","Tool call validation","Sandboxed code execution","Human-in-the-loop checkpoints","Agent guardrails","Loop detection & termination","Cost & token budget management","Observability & tracing (LangSmith, Langfuse, Arize)","Evals for agents"] },
+  ]},
+  { name: "RAG & Knowledge Systems", color: "#854F0B", isNew: true, sections: [
+    { title: "Retrieval Fundamentals", tags: ["Dense retrieval (bi-encoder)","Sparse retrieval (BM25, TF-IDF)","Hybrid search (dense + sparse)","Reciprocal rank fusion (RRF)","Re-ranking (cross-encoder)","Late interaction (ColBERT)","Matryoshka embeddings","Binary & scalar embedding quantization","Embedding models (E5, BGE, GTE, Nomic)"] },
+    { title: "RAG Architectures", tags: ["Naive RAG","Advanced RAG","Modular RAG","Corrective RAG (CRAG)","Self-RAG","HyDE (Hypothetical Document Embeddings)","Multi-query retrieval","Step-back prompting","RAG fusion","GraphRAG","Agentic RAG","Long-context RAG vs retrieval tradeoff"] },
+    { title: "Chunking & Indexing", tags: ["Fixed-size chunking","Semantic chunking","Recursive character splitting","Document hierarchy chunking","Proposition-based chunking","Parent-child chunking","Sliding window chunks","Metadata filtering","Payload indexing","Incremental index updates"] },
+    { title: "Vector Databases", tags: ["FAISS (Flat, IVF, HNSW)","Pinecone","Weaviate","Qdrant","Chroma","Milvus","PGVector","HNSW algorithm","IVF-PQ compression","ANN benchmarks","Namespace & tenant isolation"] },
+  ]},
+  { name: "NLP & Language Understanding", color: "#378ADD", sections: [
+    { title: "Core NLP", tags: ["Tokenization","POS tagging","NER","Dependency parsing","Coreference resolution","Text classification","Sentiment analysis","Semantic similarity","Summarization","Translation","Question answering"] },
+    { title: "Embeddings", tags: ["Word2Vec (CBOW, Skip-gram)","GloVe","FastText","Sentence-BERT","OpenAI text-embedding models","Instructor embeddings","Multilingual embeddings (LaBSE, mE5)","Embedding fine-tuning (contrastive, NLI)","Embedding evaluation (MTEB benchmark)"] },
+    { title: "Key Models", tags: ["BERT","RoBERTa","DeBERTa","GPT family","T5 / mT5","BART","LLaMA / Llama 2 / Llama 3","Mistral / Mixtral","Gemma","Phi / Phi-3","Qwen","Claude / Gemini / Command R"] },
+  ]},
+  { name: "Computer Vision", color: "#D4537E", sections: [
+    { title: "Core Tasks", tags: ["Image classification","Object detection (YOLO, Faster R-CNN, DETR, RT-DETR)","Semantic segmentation","Instance segmentation (Mask R-CNN, SAM)","Keypoint detection","Optical flow","Depth estimation","Video understanding","Image generation & super-resolution"] },
+    { title: "Vision-Language", tags: ["CLIP","BLIP / BLIP-2","LLaVA","GPT-4V / GPT-4o","Qwen-VL","PaliGemma","Grounding DINO","DALL-E / Stable Diffusion","ControlNet"] },
+    { title: "Techniques", tags: ["Transfer learning","Contrastive learning (SimCLR, MoCo, BYOL)","Data augmentation (Mixup, CutMix, RandAugment)","Feature pyramid networks","Non-maximum suppression","Grad-CAM"] },
+  ]},
+  { name: "MLOps & Production ML", color: "#BA7517", sections: [
+    { title: "Experiment Management", tags: ["Experiment tracking (MLflow, W&B, Comet)","Model registry","Data versioning (DVC, LakeFS)","Reproducibility","Hyperparameter tuning (Optuna, Ray Tune, Bayesian optimization)","AutoML","Model cards"] },
+    { title: "Deployment & Serving", tags: ["ONNX & TorchScript export","REST / gRPC serving","Batch vs real-time inference","A/B testing & shadow mode","Canary & blue-green deployments","Feature stores (Feast, Tecton)","Model monitoring","Data drift & concept drift detection","SLO / latency budgets"] },
+    { title: "LLM-Specific Ops", tags: ["LLM gateway / proxy (LiteLLM, PortKey, Helicone)","Prompt versioning & management","Token cost tracking","Rate limiting & quota management","Semantic response caching","LLM observability (LangSmith, Arize Phoenix, Langfuse)","Eval pipelines for LLMs","Red teaming & safety testing pipelines"] },
+    { title: "Infrastructure", tags: ["Docker & Kubernetes for ML","GPU cluster management","CUDA & driver versions","Spot/preemptible instance strategies","Cloud ML platforms (SageMaker, Vertex AI, AzureML)","Data pipelines (Airflow, Prefect, Dagster)","Stream processing (Kafka, Flink) for ML","Cost optimization","Checkpointing & fault tolerance"] },
+  ]},
+  { name: "Reinforcement Learning", color: "#639922", sections: [
+    { title: "Core Concepts", tags: ["MDP (Markov Decision Process)","State, action, reward, policy","Value function & Q-function","Bellman equation","Exploration vs exploitation","ε-greedy, UCB, Thompson sampling","Reward shaping","Sparse vs dense rewards"] },
+    { title: "Algorithms", tags: ["Q-Learning","Deep Q-Network (DQN)","Double DQN, Dueling DQN","Policy gradient (REINFORCE)","Actor-Critic (A2C, A3C)","PPO","SAC","DDPG","TD3","Model-based RL (Dreamer, MuZero)","Offline RL (CQL, IQL)"] },
+    { title: "RL for LLMs", tags: ["RLHF pipeline","Reward model training","PPO for LLMs","DPO vs PPO tradeoffs","KL penalty constraint","Reward hacking","RLAIF","Process reward models (PRM)","Outcome reward models (ORM)","GRPO (Group Relative Policy Optimization)","Verifiable reward signals"] },
+  ]},
+  { name: "Responsible AI & Theory", color: "#888780", sections: [
+    { title: "Explainability", tags: ["SHAP","LIME","Grad-CAM","Integrated gradients","Counterfactual explanations","Probing classifiers","Mechanistic interpretability","Superposition hypothesis","Sparse autoencoders for interpretability"] },
+    { title: "Fairness & Security", tags: ["Sampling bias, label bias, measurement bias","Fairness metrics (demographic parity, equalized odds)","Adversarial examples & robustness","Jailbreaking & prompt injection","Backdoor attacks","Membership inference attacks","Differential privacy","Federated learning","LLM red teaming","Hallucination & grounding"] },
+    { title: "Theory", tags: ["PAC learning","VC dimension","No free lunch theorem","Rademacher complexity","Double descent","Grokking","Neural tangent kernel (NTK)","Implicit regularization","Benign overfitting","Information bottleneck","Scaling laws"] },
+  ]},
+  { name: "Generative AI & Frontier", color: "#E8593C", sections: [
+    { title: "Generative Models", tags: ["GANs (DCGAN, StyleGAN, CycleGAN)","VAE & beta-VAE","Normalizing flows","DDPM","DDIM","Score matching","Stable Diffusion / SDXL","Latent Diffusion Models (LDM)","Flow matching","Consistency models","DiT (Diffusion Transformer)"] },
+    { title: "Multimodal", tags: ["Vision-language alignment (CLIP-style)","Text-to-image generation","Text-to-video (Sora, RunwayML)","Text-to-speech (TTS)","ASR (Whisper)","Cross-modal retrieval","Any-to-any models (GPT-4o, Gemini)","Multimodal embeddings"] },
+    { title: "Frontier Topics", tags: ["Meta-learning (MAML, Prototypical Networks)","Few-shot & zero-shot learning","Self-supervised learning","Neural architecture search (NAS)","Implicit neural representations (NeRF)","State Space Models (Mamba)","Test-time compute scaling","Reasoning models (o1, DeepSeek-R1)","Thinking tokens / extended thinking","Long-horizon planning"] },
+  ]},
+];
+
+// ── RENDER ──
+function renderAll(filter = '') {
+  const q = filter.toLowerCase().trim();
+  const container = document.getElementById('domains');
+  container.innerHTML = '';
+  let total = 0, shown = 0;
+  data.forEach(d => d.sections.forEach(s => total += s.tags.length));
+
+  let anyVisible = false;
+  data.forEach((domain, di) => {
+    let domainVisible = false;
+    const sectionsHtml = domain.sections.map(sec => {
+      const filtered = sec.tags.filter(t => !q || t.toLowerCase().includes(q));
+      if (!filtered.length && q) return '';
+      domainVisible = true;
+      shown += filtered.length;
+      const tagsHtml = filtered.map(t => {
+        const isActive = t === currentTopic ? ' active' : '';
+        const isHi = q && t.toLowerCase().includes(q) ? ' highlight' : '';
+        return `<span class="tag${isActive}${isHi}" onclick="selectTopic(this, '${escStr(t)}', '${escStr(domain.name)}')">${t}</span>`;
+      }).join('');
+      return `<div class="section"><div class="section-title">${sec.title}</div><div class="tags">${tagsHtml}</div></div>`;
+    }).join('');
+
+    if (!domainVisible) return;
+    anyVisible = true;
+    const domainTotal = domain.sections.reduce((a, s) => a + s.tags.length, 0);
+    const isOpen = !q ? di < 3 : true;
+    const badge = domain.isNew ? `<span class="domain-badge">new</span>` : '';
+
+    const div = document.createElement('div');
+    div.className = 'domain';
+    div.innerHTML = `
+      <div class="domain-header" onclick="toggleDomain(this)">
+        <div class="domain-color" style="background:${domain.color}"></div>
+        <span class="domain-name">${domain.name}</span>
+        ${badge}
+        <span class="domain-count">${domainTotal}</span>
+        <span class="domain-chevron${isOpen ? ' open' : ''}">▶</span>
+      </div>
+      <div class="domain-body${isOpen ? ' open' : ''}">${sectionsHtml}</div>
+    `;
+    container.appendChild(div);
+  });
+
+  if (!anyVisible) container.innerHTML = `<div class="no-results">nothing found for "${filter}"</div>`;
+  document.getElementById('headerCount').textContent = q ? `${shown} / ${total} concepts` : `${total} concepts`;
+  document.getElementById('searchCount').textContent = q ? `${shown} results` : '';
+}
+
+function escStr(s) { return s.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+function toggleDomain(header) {
+  const body = header.nextElementSibling;
+  const ch = header.querySelector('.domain-chevron');
+  const open = body.classList.toggle('open');
+  ch.classList.toggle('open', open);
+}
+
+// ── TOPIC SELECT ──
+function selectTopic(el, topic, domain) {
+  if (activeTagEl) activeTagEl.classList.remove('active');
+  el.classList.add('active');
+  activeTagEl = el;
+
+  currentTopic = topic;
+  currentDomain = domain;
+  chatHistory = [];
+
+  document.getElementById('panelTopic').textContent = topic;
+  document.getElementById('panelDomain').textContent = domain;
+  document.getElementById('panel').classList.add('open');
+  document.getElementById('browser').classList.add('panel-open');
+
+  const msgs = document.getElementById('chatMessages');
+  msgs.innerHTML = '';
+
+  showSuggestedQs(topic);
+  autoExplain(topic, domain);
+}
+
+function closePanel() {
+  document.getElementById('panel').classList.remove('open');
+  document.getElementById('browser').classList.remove('panel-open');
+  if (activeTagEl) { activeTagEl.classList.remove('active'); activeTagEl = null; }
+  currentTopic = '';
+}
+
+// ── SUGGESTED QUESTIONS ──
+const SUGGESTED = {
+  default: ["Explain like I'm 5", "Interview question on this", "Code example", "Compare to alternatives", "Common pitfalls"],
+  "KV cache mechanics": ["How does paged attention work?", "Memory cost formula?", "GQA vs MQA impact?"],
+  "Backpropagation": ["Derive the gradient step by step", "Vanishing gradient connection?", "Computational graph example?"],
+  "Transformer": ["Attention complexity?", "Encoder vs decoder?", "Why layer norm before attention?"],
+};
+
+function showSuggestedQs(topic) {
+  const qs = SUGGESTED[topic] || SUGGESTED.default;
+  const el = document.getElementById('suggestedQs');
+  el.innerHTML = qs.map(q =>
+    `<span class="suggested-q" onclick="useSuggested('${escStr(q)}')">${q}</span>`
+  ).join('');
+}
+
+function useSuggested(q) {
+  document.getElementById('chatInput').value = q;
+  sendMessage();
+}
+
+// ── AUTO EXPLAIN ──
+async function autoExplain(topic, domain) {
+  const systemPrompt = `You are an expert ML/AI interview coach. The user is preparing for a mid-senior ML engineer interview (5 years experience). 
+When explaining a concept:
+1. Start with a crisp 1-2 line definition
+2. Explain the core intuition (why it works / what problem it solves)
+3. Cover key details an interviewer would probe: math, trade-offs, when to use/avoid
+4. Give 1 concrete example or analogy
+5. Mention 1-2 gotchas or common interview traps
+Keep it dense but scannable. Use markdown formatting: ## for sections, **bold** for key terms, \`code\` for technical terms/formulas, bullet points where helpful.`;
+
+  const userMsg = `Explain **${topic}** (from the domain: ${domain}) for a mid-senior ML interview. Be thorough but interview-focused.`;
+
+  addMessage('assistant', null, true); // typing indicator
+  chatHistory.push({ role: 'user', content: userMsg });
+
+  try {
+    const reply = await callOpenAI(systemPrompt, chatHistory);
+    chatHistory.push({ role: 'assistant', content: reply });
+    replaceLastTypingWithMessage('assistant', reply);
+  } catch(e) {
+    replaceLastTypingWithMessage('assistant', null, `Error: ${e.message}`);
+  }
+}
+
+// ── SEND MESSAGE ──
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text || isLoading) return;
+  if (!currentTopic) return;
+
+  input.value = '';
+  autoResize(input);
+  document.getElementById('sendBtn').disabled = true;
+
+  addMessage('user', text);
+  chatHistory.push({ role: 'user', content: text });
+
+  addMessage('assistant', null, true); // typing
+
+  const systemPrompt = `You are an expert ML/AI interview coach. The user is studying **${currentTopic}** (domain: ${currentDomain}) for a mid-senior ML interview.
+Answer their follow-up questions with precision and depth appropriate for someone with 5 years experience.
+Use markdown formatting for clarity: ## headings, **bold** key terms, \`inline code\`, code blocks, bullet lists.
+Be direct, technical, and interview-focused.`;
+
+  try {
+    const reply = await callOpenAI(systemPrompt, chatHistory);
+    chatHistory.push({ role: 'assistant', content: reply });
+    replaceLastTypingWithMessage('assistant', reply);
+  } catch(e) {
+    replaceLastTypingWithMessage('assistant', null, `Error: ${e.message}`);
+  }
+
+  updateSendButtonState();
+}
+
+// ── OPENAI API ──
+async function callOpenAI(systemPrompt, messages) {
+  isLoading = true;
+  updateSendButtonState();
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o',
+      systemPrompt,
+      messages,
+    })
+  });
+
+  isLoading = false;
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.content;
+}
+
+// ── MESSAGE RENDERING ──
+function addMessage(role, content, isTyping = false) {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg';
+
+  const roleLabel = document.createElement('div');
+  roleLabel.className = `msg-role ${role === 'user' ? 'user-role' : ''}`;
+  roleLabel.textContent = role === 'user' ? 'you' : 'coach';
+  div.appendChild(roleLabel);
+
+  const contentDiv = document.createElement('div');
+  contentDiv.className = `msg-content ${role === 'user' ? 'user-content' : ''}`;
+
+  if (isTyping) {
+    contentDiv.innerHTML = `<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+    div.dataset.typing = 'true';
+  } else if (content) {
+    contentDiv.innerHTML = markdownToHtml(content);
+  }
+
+  div.appendChild(contentDiv);
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function replaceLastTypingWithMessage(role, content, errorText) {
+  const msgs = document.getElementById('chatMessages');
+  const typing = msgs.querySelector('[data-typing="true"]');
+  if (typing) {
+    const contentDiv = typing.querySelector('.msg-content');
+    if (errorText) {
+      contentDiv.innerHTML = `<div class="error-msg">${errorText}</div>`;
+    } else {
+      contentDiv.innerHTML = markdownToHtml(content);
+    }
+    delete typing.dataset.typing;
+  }
+  msgs.scrollTop = msgs.scrollHeight;
+  isLoading = false;
+  updateSendButtonState();
+}
+
+// ── SIMPLE MARKDOWN PARSER ──
+function markdownToHtml(md) {
+  let html = md
+    // code blocks
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) =>
+      `<pre><code class="lang-${lang}">${escHtml(code.trim())}</code></pre>`)
+    // inline code
+    .replace(/`([^`]+)`/g, (_, c) => `<code>${escHtml(c)}</code>`)
+    // headers
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    // bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // italic
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // blockquote
+    .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+    // unordered list items
+    .replace(/^[*\-] (.+)$/gm, '<li>$1</li>')
+    // numbered list items
+    .replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+
+  // wrap consecutive <li> in <ul>
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, m => `<ul>${m}</ul>`);
+
+  // paragraphs: split by double newline
+  const blocks = html.split(/\n{2,}/);
+  html = blocks.map(b => {
+    b = b.trim();
+    if (!b) return '';
+    if (b.match(/^<(h[123]|ul|ol|pre|blockquote)/)) return b;
+    return `<p>${b.replace(/\n/g, '<br>')}</p>`;
+  }).join('\n');
+
+  return html;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── UI HELPERS ──
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+  updateSendButtonState();
+}
+
+function filterAll(val) { renderAll(val); }
+
+function updateSendButtonState() {
+  const input = document.getElementById('chatInput');
+  document.getElementById('sendBtn').disabled = !input.value.trim() || isLoading || !currentTopic;
+}
+
+// ── INIT ──
+renderAll();
+updateSendButtonState();
+</script>
+</body>
+</html>
