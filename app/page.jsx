@@ -301,7 +301,7 @@ export default function Page() {
   }
 
   async function autoExplain(topic, domain, baseMessages = messages) {
-    const systemPrompt = `You are an expert ML/AI interview coach. The user is preparing for a mid-senior ML engineer interview (5 years experience). When explaining a concept: 1. Start with a crisp 1-2 line definition 2. Explain the core intuition 3. Cover math, trade-offs, when to use/avoid 4. Give 1 concrete example or analogy 5. Mention 1-2 gotchas. Use markdown.`;
+    const systemPrompt = `You are an expert ML/AI interview coach. The user is preparing for a mid-senior ML engineer interview (5 years experience). Write in a structured format with short sections and bullets when useful. Use this order when relevant: Definition, Core intuition, Trade-offs, Interview takeaways, Gotchas. Keep paragraphs short. Use markdown.`;
     const userMsg = `Explain **${topic}** (from the domain: ${domain}) for a mid-senior ML interview. Be thorough but interview-focused.`;
 
     const optimistic = [...baseMessages, { role: 'user', content: userMsg }];
@@ -339,7 +339,7 @@ export default function Page() {
     setChatInput('');
     setIsLoading(true);
 
-    const systemPrompt = `You are an expert ML/AI interview coach. The user is studying **${selectedTopic}** (domain: ${selectedDomain}) for a mid-senior ML interview. Answer with clarity, depth, markdown, and practical interview focus.`;
+    const systemPrompt = `You are an expert ML/AI interview coach. The user is studying **${selectedTopic}** (domain: ${selectedDomain}) for a mid-senior ML interview. Answer in a structured format with concise sections, bullets, and clear spacing. Prefer the sections: Definition, Core idea, Trade-offs, Interview angle, Examples, Common mistakes. Keep markdown clean and readable.`;
 
     try {
       const reply = await callOpenAI(systemPrompt, nextMessages);
@@ -444,7 +444,7 @@ Rules:
     setIsLoading(true);
     openLibrary('compare');
     try {
-      const systemPrompt = 'You are an expert ML interview coach. Compare two ML concepts in a structured way. Use headings and include high-level difference, when to use each, trade-offs, key interview questions, and confusion traps.';
+      const systemPrompt = 'You are an expert ML interview coach. Compare two ML concepts in a structured way. Use headings and bullets. Include high-level difference, when to use each, trade-offs, key interview questions, and confusion traps. Keep it concise but easy to scan.';
       const userMsg = `Compare **${compareA}** vs **${compareB}** for interview preparation. Keep it concise but deep.`;
       const reply = await callOpenAI(systemPrompt, [{ role: 'user', content: userMsg }], { temperature: 0.5 });
       setCompareResult(reply);
@@ -626,9 +626,9 @@ Rules:
         <div>
           <div className="brand-row">
             <span className="brand-dot" />
-            <h1>ML Interview Prep</h1>
+            <h1>Interview Intelligence Studio</h1>
           </div>
-          <p>Search concepts, drill quizzes, bookmark weak spots, and compare ideas fast.</p>
+          <p>Master ML concepts with focused practice, cleaner notes, and interview-grade recall.</p>
         </div>
         <div className="topbar-actions">
           <span className="status-pill">API via .env</span>
@@ -654,7 +654,7 @@ Rules:
           <div className="browser-meta">{search ? `${visibleConcepts} / ${totalConcepts} concepts` : `${totalConcepts} concepts`}</div>
           <div className="domain-list">
             {filteredDomains.map((domain) => (
-              <details className="domain-card" key={domain.name} open={!search}>
+              <details className="domain-card" key={domain.name}>
                 <summary>
                   <span className="domain-color" style={{ background: domain.color }} />
                   <span>{domain.name}</span>
@@ -733,17 +733,25 @@ Rules:
               sendMessage();
             }}
           >
-            <textarea
-              value={chatInput}
-              onChange={(event) => setChatInput(event.target.value)}
-              placeholder={selectedTopic ? `Ask a follow-up about ${selectedTopic}…` : 'Select a topic to begin…'}
-              rows={3}
-            />
-            <div className="chat-actions">
-              <span className="chat-hint">Enter to send, Shift+Enter for a new line</span>
+            <div className="chat-input-row">
+              <textarea
+                value={chatInput}
+                onChange={(event) => setChatInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    sendMessage();
+                  }
+                }}
+                placeholder={selectedTopic ? `Ask a follow-up about ${selectedTopic}…` : 'Select a topic to begin…'}
+                rows={2}
+              />
               <button className="primary-btn" type="submit" disabled={!selectedTopic || !chatInput.trim() || isLoading}>
                 {isLoading ? 'Thinking…' : 'Send'}
               </button>
+            </div>
+            <div className="chat-actions">
+              <span className="chat-hint">Enter to send, Shift+Enter for a new line</span>
             </div>
           </form>
         </section>

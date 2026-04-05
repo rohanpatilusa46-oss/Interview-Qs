@@ -1,8 +1,8 @@
 import './globals.css';
 
 export const metadata = {
-  title: 'ML Interview Prep',
-  description: 'Next.js interview prep app for machine learning concepts, quiz mode, bookmarks, and chat history.',
+  title: 'Interview Intelligence Studio',
+  description: 'A polished ML interview prep workspace with concept maps, adaptive quizzes, bookmarks, and deep-dive comparisons.',
 };
 
 export default function RootLayout({ children }) {
