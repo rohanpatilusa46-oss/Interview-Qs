@@ -225,6 +225,12 @@ body::after {
   gap: 8px;
 }
 
+.sidebar-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .sidebar-wordmark,
 .sidebar-count {
   font-family: var(--font-mono);
@@ -252,6 +258,11 @@ body::after {
   color: var(--text);
   border-color: rgba(124, 109, 250, 0.6);
   background: rgba(124, 109, 250, 0.12);
+}
+
+.sidebar-user-avatar {
+  width: 24px;
+  height: 24px;
 }
 
 .sidebar-rule {

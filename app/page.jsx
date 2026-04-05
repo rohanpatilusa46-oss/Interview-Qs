@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { SignInButton, UserButton, useAuth } from '@clerk/nextjs';
 import { data } from '../lib/data';
 
 const STORAGE_KEYS = {
@@ -133,6 +134,7 @@ function pickRandomTopics(count = 5) {
 }
 
 export default function Page() {
+  const { userId, isLoaded: authLoaded } = useAuth();
   const topicIndex = useMemo(() => buildTopicIndex(), []);
   const topicsByDomain = useMemo(() => {
     const map = {};
@@ -164,7 +166,9 @@ export default function Page() {
   const [compareB, setCompareB] = useState('');
   const [compareResult, setCompareResult] = useState('');
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [cloudStateReady, setCloudStateReady] = useState(false);
   const chatMessagesRef = useRef(null);
+  const cloudSaveTimerRef = useRef(null);
 
   function createMessage(role, content) {
     return {
@@ -199,24 +203,95 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || userId) return;
     window.localStorage.setItem(STORAGE_KEYS.bookmarks, JSON.stringify(bookmarks));
-  }, [bookmarks, hydrated]);
+  }, [bookmarks, hydrated, userId]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || userId) return;
     window.localStorage.setItem(STORAGE_KEYS.conversations, JSON.stringify(conversations));
-  }, [conversations, hydrated]);
+  }, [conversations, hydrated, userId]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || userId) return;
     window.localStorage.setItem(STORAGE_KEYS.quizCache, JSON.stringify(quizCache));
-  }, [quizCache, hydrated]);
+  }, [quizCache, hydrated, userId]);
 
   useEffect(() => {
     if (!hydrated) return;
     window.localStorage.setItem(STORAGE_KEYS.uiMode, currentView);
   }, [currentView, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated || !authLoaded) return;
+
+    if (!userId) {
+      setCloudStateReady(true);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadCloudLibrary() {
+      setCloudStateReady(false);
+      try {
+        const response = await fetch('/api/library', { cache: 'no-store' });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload?.error?.message || `HTTP ${response.status}`);
+        }
+
+        if (cancelled) return;
+
+        setBookmarks(Array.isArray(payload?.bookmarks) ? payload.bookmarks : []);
+        setConversations(payload?.conversations && typeof payload.conversations === 'object' ? payload.conversations : {});
+        setQuizCache(payload?.quizCache && typeof payload.quizCache === 'object' ? payload.quizCache : {});
+      } catch (error) {
+        console.error('Cloud library load failed:', error);
+      } finally {
+        if (!cancelled) {
+          setCloudStateReady(true);
+        }
+      }
+    }
+
+    loadCloudLibrary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, authLoaded, userId]);
+
+  useEffect(() => {
+    if (!hydrated || !authLoaded || !userId || !cloudStateReady) return;
+
+    if (cloudSaveTimerRef.current) {
+      window.clearTimeout(cloudSaveTimerRef.current);
+    }
+
+    cloudSaveTimerRef.current = window.setTimeout(async () => {
+      try {
+        const response = await fetch('/api/library', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bookmarks, conversations, quizCache }),
+        });
+
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}));
+          throw new Error(payload?.error?.message || `HTTP ${response.status}`);
+        }
+      } catch (error) {
+        console.error('Cloud library save failed:', error);
+      }
+    }, 450);
+
+    return () => {
+      if (cloudSaveTimerRef.current) {
+        window.clearTimeout(cloudSaveTimerRef.current);
+      }
+    };
+  }, [bookmarks, conversations, quizCache, hydrated, authLoaded, userId, cloudStateReady]);
 
   useEffect(() => {
     if (!selectedTopic || !hydrated) return;
@@ -700,9 +775,20 @@ Rules:
             <div className="sidebar-wordmark">Interview Preparation</div>
             <div className="sidebar-meta-row">
               <div className="sidebar-count" id="headerCount">{totalConcepts} concepts</div>
-              <button className="sidebar-library-btn" onClick={() => openLibrary('history')}>
-                Library
-              </button>
+              <div className="sidebar-meta-actions">
+                <button className="sidebar-library-btn" onClick={() => openLibrary('history')}>
+                  Library
+                </button>
+                {authLoaded && (
+                  userId ? (
+                    <UserButton appearance={{ elements: { userButtonAvatarBox: 'sidebar-user-avatar' } }} afterSignOutUrl="/" />
+                  ) : (
+                    <SignInButton mode="modal">
+                      <button className="sidebar-library-btn">Sign in</button>
+                    </SignInButton>
+                  )
+                )}
+              </div>
             </div>
           </div>
           <div className="sidebar-rule" />
