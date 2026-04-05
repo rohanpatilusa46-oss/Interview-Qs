@@ -438,7 +438,7 @@ body::after {
   display: flex;
   flex-wrap: nowrap;
   gap: 6px;
-  padding: 8px 0 8px;
+  padding: 6px 0 8px;
   flex: 0 0 auto;
   overflow-x: auto;
   white-space: nowrap;
@@ -463,9 +463,11 @@ body::after {
 }
 
 .chip {
-  padding: 7px 12px;
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  padding: 5px 11px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  border: 0;
+  border-left: 2px solid #0071e3;
   background: #1d1d1f;
   flex: 0 0 auto;
 }
@@ -550,8 +552,9 @@ body::after {
 
 .messages {
   display: grid;
-  gap: 8px;
-  padding: 10px 12px;
+  gap: 20px;
+  padding: 8px 12px;
+  font-size: 14px;
   max-height: 100%;
   overflow: auto;
 }
@@ -571,43 +574,83 @@ body::after {
 
 .message {
   display: grid;
-  gap: 4px;
-  max-width: min(860px, 92%);
+  gap: 6px;
+  width: 100%;
   animation: messageEnter var(--dur-med) var(--ease-enter) both;
 }
 
 .message.user {
-  justify-self: end;
+  justify-self: stretch;
 }
 
 .message.assistant {
-  justify-self: start;
+  justify-self: stretch;
 }
 
-.message-role {
-  font-family: var(--font-mono);
+.message-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+}
+
+.message.user .message-row {
+  justify-content: flex-end;
+}
+
+.message.assistant .message-row {
+  justify-content: flex-start;
+}
+
+.message-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #111217;
+  color: rgba(255, 255, 255, 0.88);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex: 0 0 auto;
+  line-height: 1;
+}
+
+.message-content {
+  display: grid;
+  gap: 6px;
+  max-width: 80%;
+}
+
+.message-time {
   font-size: 11px;
-  text-transform: uppercase;
-  color: var(--muted-strong);
-  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.42);
+  line-height: 1;
 }
 
-.message.user .message-role {
+.message.user .message-time {
   text-align: right;
-  color: rgba(255, 255, 255, 0.56);
 }
 
 .message.user .message-body {
-  background: #1d1d1f;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #0071e3;
+  color: #ffffff;
+  border-radius: 18px 18px 4px 18px;
+  padding: 10px 14px;
+  border: 0;
+}
+
+.message.assistant .message-body {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1.8;
 }
 
 .message-body {
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 0;
-  background: #1d1d1f;
-  line-height: 1.35;
+  line-height: 1.5;
   font-size: 14px;
   letter-spacing: -0.01em;
 }
@@ -615,8 +658,15 @@ body::after {
 .message-body h1,
 .message-body h2,
 .message-body h3 {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   font-family: var(--font-display);
+}
+
+.message.assistant .message-body h2 {
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #0071e3;
 }
 
 .message-body p,
@@ -624,6 +674,20 @@ body::after {
 .message-body ol,
 .message-body blockquote {
   margin: 0 0 10px;
+}
+
+.message-body ul,
+.message-body ol {
+  padding-left: 20px;
+}
+
+.message-body li {
+  margin-bottom: 8px;
+}
+
+.message-body strong {
+  color: #ffffff;
+  font-weight: 700;
 }
 
 .message-body code {
@@ -634,12 +698,30 @@ body::after {
   font-family: var(--font-mono);
 }
 
+.code-block {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #0b0c10;
+  margin-bottom: 8px;
+}
+
+.code-head {
+  padding: 8px 12px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-transform: lowercase;
+}
+
 .message-body pre {
   overflow-x: auto;
-  padding: 14px;
-  border-radius: 8px;
-  background: #000000;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 0;
+  padding: 16px;
+  border-radius: 0;
+  background: #0b0c10;
+  border: 0;
   color: #ffffff;
 }
 
@@ -652,7 +734,7 @@ body::after {
 .typing-row {
   display: flex;
   gap: 6px;
-  padding: 0 12px 8px;
+  padding: 6px 0 4px;
 }
 
 .typing-row span {
@@ -674,7 +756,7 @@ body::after {
 @keyframes messageEnter {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -1117,17 +1199,17 @@ body::after {
     max-width: 100%;
   }
 
+  .message.user,
+  .message.assistant {
+    max-width: 100%;
+  }
+
+  .message-content {
+    max-width: calc(100% - 40px);
+  }
+
   .chat-box textarea {
-    min-height: 92px;
-  }
-
-  .chat-input-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .chat-input-row .primary-btn {
-    align-self: flex-end;
+    min-height: 42px;
   }
 
   .topbar,

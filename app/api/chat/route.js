@@ -36,7 +36,20 @@ export async function POST(request) {
       }),
     });
 
-    const payload = await response.json();
+    const raw = await response.text();
+    let payload;
+
+    try {
+      payload = raw ? JSON.parse(raw) : {};
+    } catch {
+      payload = {
+        error: {
+          message: response.ok
+            ? 'Upstream returned an invalid response.'
+            : `Upstream error (${response.status}).`,
+        },
+      };
+    }
 
     if (!response.ok) {
       return NextResponse.json(payload, { status: response.status });

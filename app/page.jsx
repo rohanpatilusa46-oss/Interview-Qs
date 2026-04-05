@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { data } from '../lib/data';
 
 const STORAGE_KEYS = {
@@ -52,7 +52,7 @@ function escapeAttr(value) {
 
 function markdownToHtml(md) {
   let html = md
-    .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => `<pre><code class="lang-${lang}">${escapeHtml(code.trim())}</code></pre>`)
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (_, lang, code) => `<div class="code-block"><div class="code-head">code</div><pre><code class="lang-${escapeAttr(lang || 'txt')}">${escapeHtml(code.trim())}</code></pre></div>`)
     .replace(/`([^`]+)`/g, (_, code) => `<code>${escapeHtml(code)}</code>`)
     .replace(/^### (.+)$/gm, '<h3>$1</h3>')
     .replace(/^## (.+)$/gm, '<h2>$1</h2>')
@@ -154,6 +154,31 @@ export default function Page() {
   const [compareB, setCompareB] = useState('');
   const [compareResult, setCompareResult] = useState('');
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const chatMessagesRef = useRef(null);
+
+  function createMessage(role, content) {
+    return {
+      role,
+      content,
+      createdAt: Date.now(),
+    };
+  }
+
+  function normalizeMessages(rawMessages = []) {
+    const base = Date.now();
+    return rawMessages.map((message, index) => ({
+      ...message,
+      createdAt: message.createdAt || (base + index),
+    }));
+  }
+
+  function formatMessageTime(timestamp) {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  }
 
   useEffect(() => {
     setHydrated(true);
@@ -185,7 +210,7 @@ export default function Page() {
 
   useEffect(() => {
     if (!selectedTopic || !hydrated) return;
-    const saved = conversations[selectedTopic]?.messages || [];
+    const saved = normalizeMessages(conversations[selectedTopic]?.messages || []);
     setMessages(saved);
     setCurrentQuiz(quizCache[selectedTopic] || []);
     setQuizStep(0);
@@ -195,6 +220,13 @@ export default function Page() {
     setQuizCompleted(false);
     setCompareA(selectedTopic);
   }, [selectedTopic, conversations, quizCache, hydrated]);
+
+  useEffect(() => {
+    const container = chatMessagesRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+    container.scrollTop = container.scrollHeight;
+  }, [messages, isLoading]);
 
   const filteredDomains = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -259,16 +291,34 @@ export default function Page() {
       }),
     });
 
-    const payload = await response.json();
-    if (!response.ok) throw new Error(payload?.error?.message || `HTTP ${response.status}`);
-    return payload.content;
+    const raw = await response.text();
+    let payload = null;
+
+    try {
+      payload = raw ? JSON.parse(raw) : null;
+    } catch {
+      if (!response.ok) {
+        throw new Error(`Server error (${response.status}). Please retry.`);
+      }
+      throw new Error('Invalid response from server. Please retry.');
+    }
+
+    if (!response.ok) {
+      throw new Error(payload?.error?.message || `HTTP ${response.status}`);
+    }
+
+    return payload?.content || '';
   }
 
   function saveConversation(topic, nextMessages) {
     setConversations((prev) => ({
       ...prev,
       [topic]: {
-        messages: nextMessages.map((message) => ({ role: message.role, content: message.content })),
+        messages: nextMessages.map((message) => ({
+          role: message.role,
+          content: message.content,
+          createdAt: message.createdAt || Date.now(),
+        })),
         updatedAt: Date.now(),
         domain: topicIndex[topic] || selectedDomain,
       },
@@ -291,7 +341,7 @@ export default function Page() {
     setCurrentView('learn');
     setLibraryOpen(false);
     setChatInput('');
-    const saved = conversations[topic]?.messages || [];
+    const saved = normalizeMessages(conversations[topic]?.messages || []);
     setMessages(saved);
     setCurrentQuiz(quizCache[topic] || []);
     setCompareA(topic);
@@ -301,21 +351,21 @@ export default function Page() {
   }
 
   async function autoExplain(topic, domain, baseMessages = messages) {
-    const systemPrompt = `You are an expert ML/AI interview coach. The user is preparing for a mid-senior ML engineer interview (5 years experience). Write in a structured format with short sections and bullets when useful. Use this order when relevant: Definition, Core intuition, Trade-offs, Interview takeaways, Gotchas. Keep paragraphs short. Use markdown.`;
-    const userMsg = `Explain **${topic}** (from the domain: ${domain}) for a mid-senior ML interview. Be thorough but interview-focused.`;
+    const systemPrompt = 'You are a helpful AI assistant. Keep answers conversational and easy to scan. Use short paragraphs, optional bullets only when helpful, and avoid long walls of text. Do not use LaTeX; write math in plain text.';
+    const userMsg = `Explain ${topic} in simple terms.${domain ? ` (Domain: ${domain})` : ''}`;
 
-    const optimistic = [...baseMessages, { role: 'user', content: userMsg }];
+    const optimistic = [...baseMessages, createMessage('user', userMsg)];
     setMessages(optimistic);
     saveConversation(topic, optimistic);
     setIsLoading(true);
 
     try {
       const reply = await callOpenAI(systemPrompt, optimistic);
-      const updated = [...optimistic, { role: 'assistant', content: reply }];
+      const updated = [...optimistic, createMessage('assistant', reply)];
       setMessages(updated);
       saveConversation(topic, updated);
     } catch (error) {
-      const updated = [...optimistic, { role: 'assistant', content: `Error: ${error.message}` }];
+      const updated = [...optimistic, createMessage('assistant', `Error: ${error.message}`)];
       setMessages(updated);
       saveConversation(topic, updated);
     } finally {
@@ -333,21 +383,21 @@ export default function Page() {
       return;
     }
 
-    const nextMessages = [...messages, { role: 'user', content: text }];
+    const nextMessages = [...messages, createMessage('user', text)];
     setMessages(nextMessages);
     saveConversation(selectedTopic, nextMessages);
     setChatInput('');
     setIsLoading(true);
 
-    const systemPrompt = `You are an expert ML/AI interview coach. The user is studying **${selectedTopic}** (domain: ${selectedDomain}) for a mid-senior ML interview. Answer in a structured format with concise sections, bullets, and clear spacing. Prefer the sections: Definition, Core idea, Trade-offs, Interview angle, Examples, Common mistakes. Keep markdown clean and readable.`;
+    const systemPrompt = 'You are a helpful AI assistant. Reply naturally like a chat conversation. Keep answers concise and clear, with short paragraphs and bullets only if needed. Avoid LaTeX; use plain text math.';
 
     try {
       const reply = await callOpenAI(systemPrompt, nextMessages);
-      const updated = [...nextMessages, { role: 'assistant', content: reply }];
+      const updated = [...nextMessages, createMessage('assistant', reply)];
       setMessages(updated);
       saveConversation(selectedTopic, updated);
     } catch (error) {
-      const updated = [...nextMessages, { role: 'assistant', content: `Error: ${error.message}` }];
+      const updated = [...nextMessages, createMessage('assistant', `Error: ${error.message}`)];
       setMessages(updated);
       saveConversation(selectedTopic, updated);
     } finally {
@@ -701,16 +751,16 @@ Rules:
             </div>
           </div>
 
-          <div className="quick-chips">
+          <div className="quick-chips" role="list" aria-label="Suggested questions">
             {(SUGGESTED[selectedTopic] || SUGGESTED.default).map((prompt) => (
-              <button key={prompt} className="chip" onClick={() => setChatInput(prompt)}>
+              <button key={prompt} className="chip" onClick={() => setChatInput(prompt)} role="listitem">
                 {prompt}
               </button>
             ))}
           </div>
 
           <div className="conversation">
-            <div className="messages">
+            <div className="messages" ref={chatMessagesRef}>
               {!messages.length ? (
                 <div className="empty-state hero-empty">
                   <h3>Start with a concept and get a guided explanation.</h3>
@@ -718,11 +768,24 @@ Rules:
                 </div>
               ) : messages.map((message, index) => (
                 <article key={`${message.role}-${index}`} className={`message ${message.role}`}>
-                  <span className="message-role">{message.role === 'user' ? 'you' : 'coach'}</span>
-                  <div className="message-body" dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }} />
+                  <div className="message-row">
+                    {message.role !== 'user' ? <span className="message-avatar coach">◈</span> : null}
+                    <div className="message-content">
+                      <div className="message-body" dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }} />
+                      <span className="message-time">{formatMessageTime(message.createdAt)}</span>
+                    </div>
+                    {message.role === 'user' ? <span className="message-avatar user">R</span> : null}
+                  </div>
                 </article>
               ))}
-              {isLoading && <div className="typing-row"><span /><span /><span /></div>}
+              {isLoading && (
+                <div className="message assistant typing">
+                  <div className="message-row">
+                    <span className="message-avatar coach">◈</span>
+                    <div className="typing-row"><span /><span /><span /></div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
