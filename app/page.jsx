@@ -122,6 +122,16 @@ function normalizeQuizItems(payload) {
     .filter(Boolean);
 }
 
+function pickRandomTopics(count = 5) {
+  const all = data.flatMap((domain) => domain.sections.flatMap((section) => section.tags));
+  const copy = [...all];
+  for (let index = copy.length - 1; index > 0; index -= 1) {
+    const randomIndex = Math.floor(Math.random() * (index + 1));
+    [copy[index], copy[randomIndex]] = [copy[randomIndex], copy[index]];
+  }
+  return copy.slice(0, count);
+}
+
 export default function Page() {
   const topicIndex = useMemo(() => buildTopicIndex(), []);
   const topicsByDomain = useMemo(() => {
@@ -258,6 +268,18 @@ export default function Page() {
 
     return [...picks, ...fallback.slice(0, 3 - picks.length)];
   }, [selectedTopic, selectedDomain, topicsByDomain]);
+
+  const selectedSection = useMemo(() => {
+    if (!selectedTopic) return '';
+    for (const domain of data) {
+      for (const section of domain.sections) {
+        if (section.tags.includes(selectedTopic)) return section.title;
+      }
+    }
+    return '';
+  }, [selectedTopic]);
+
+  const emptySuggestions = useMemo(() => pickRandomTopics(5), []);
 
   function openLibrary(tab = 'bookmarks') {
     setLibraryTab(tab);
@@ -672,43 +694,33 @@ Rules:
         ))}
       </datalist>
 
-      <header className="topbar">
-        <div>
-          <div className="brand-row">
-            <span className="brand-dot" />
-            <h1>Interview Intelligence Studio</h1>
-          </div>
-          <p>Master ML concepts with focused practice, cleaner notes, and interview-grade recall.</p>
-        </div>
-        <div className="topbar-actions">
-          <span className="status-pill">API via .env</span>
-          <span className="status-pill">{totalConcepts} concepts</span>
-          <span className="status-pill">{bookmarksCount} saved</span>
-          <span className="status-pill">{historyCount} chats</span>
-        </div>
-      </header>
-
       <main className="workspace">
         <aside className="sidebar card">
-          <div className="sidebar-head">
-            <div>
-              <div className="section-label">Concept browser</div>
-              <h2>Explore the curriculum</h2>
+          <div className="sidebar-meta">
+            <div className="sidebar-wordmark">Interview Preparation</div>
+            <div className="sidebar-meta-row">
+              <div className="sidebar-count" id="headerCount">{totalConcepts} concepts</div>
+              <button className="sidebar-library-btn" onClick={() => openLibrary('history')}>
+                Library
+              </button>
             </div>
-            <button className="ghost-btn" onClick={() => openLibrary('bookmarks')}>Library</button>
           </div>
+          <div className="sidebar-rule" />
+
           <div className="search-box">
             <span>⌕</span>
-            <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search concepts…" />
+            <input id="searchInput" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="search concepts..." />
           </div>
-          <div className="browser-meta">{search ? `${visibleConcepts} / ${totalConcepts} concepts` : `${totalConcepts} concepts`}</div>
-          <div className="domain-list">
+
+          <div className="browser-meta" id="searchCount">{search ? `${visibleConcepts} / ${totalConcepts} concepts` : `${totalConcepts} concepts`}</div>
+          <div className="domain-list" id="domains">
             {filteredDomains.map((domain) => (
               <details className="domain-card" key={domain.name}>
                 <summary>
                   <span className="domain-color" style={{ background: domain.color }} />
                   <span>{domain.name}</span>
                   <span className="domain-count">{domain.sections.reduce((sum, section) => sum + section.tags.length, 0)}</span>
+                  <span className="domain-chevron">▾</span>
                 </summary>
                 <div className="section-list">
                   {domain.sections.map((section) => (
@@ -733,90 +745,111 @@ Rules:
         </aside>
 
         <section className="content card">
-          <div className="content-head">
-            <div>
-              <div className="section-label">Studying</div>
-              <h2>{selectedTopic || 'Pick a concept to begin'}</h2>
-              <p>{selectedDomain || 'Use the browser on the left to open a topic and get a tailored explanation.'}</p>
+          {!selectedTopic ? (
+            <div className="empty-study">
+              <div className="empty-glyph">◈</div>
+              <h2>Select a concept to study</h2>
+              <div className="empty-suggestions">
+                {emptySuggestions.map((topic) => (
+                  <button key={topic} className="tag-chip" onClick={() => openTopic(topic, topicIndex[topic] || '')}>
+                    {topic}
+                  </button>
+                ))}
+              </div>
+              <p>← browse topics on the left  ·  click any tag to begin</p>
             </div>
-            <div className="content-actions">
-              <button className={`ghost-btn ${bookmarks.find((entry) => entry.topic === selectedTopic) ? 'active' : ''}`} onClick={() => toggleBookmark()} disabled={!selectedTopic}>
-                {bookmarks.find((entry) => entry.topic === selectedTopic) ? '★ Bookmarked' : '☆ Bookmark'}
-              </button>
-              <button className="ghost-btn" onClick={() => openLibrary('bookmarks')} disabled={!selectedTopic && !bookmarks.length && !historyCount}>
-                Library
-              </button>
-              <button className="ghost-btn" onClick={() => openLibrary('quiz')}>Quiz</button>
-              <button className="ghost-btn" onClick={() => openLibrary('compare')}>Compare</button>
-            </div>
-          </div>
-
-          <div className="quick-chips" role="list" aria-label="Suggested questions">
-            {(SUGGESTED[selectedTopic] || SUGGESTED.default).map((prompt) => (
-              <button key={prompt} className="chip" onClick={() => setChatInput(prompt)} role="listitem">
-                {prompt}
-              </button>
-            ))}
-          </div>
-
-          <div className="conversation">
-            <div className="messages" ref={chatMessagesRef}>
-              {!messages.length ? (
-                <div className="empty-state hero-empty">
-                  <h3>Start with a concept and get a guided explanation.</h3>
-                  <p>Then quiz yourself, save it for later, or compare it to a related idea.</p>
+          ) : (
+            <>
+              <div className="study-head">
+                <div className="study-breadcrumb">{selectedDomain || 'Domain'}  ›  {selectedSection || 'Topic'}</div>
+                <h2 id="panelTopic">{selectedTopic}</h2>
+                <div className="study-actions">
+                  <button className={`ghost-btn ${bookmarks.find((entry) => entry.topic === selectedTopic) ? 'active' : ''}`} onClick={() => toggleBookmark()}>
+                    ★ Bookmark
+                  </button>
+                  <button className="ghost-btn" onClick={() => generateQuiz(selectedTopic, 5)}>Quiz me</button>
+                  <button className="ghost-btn" onClick={() => openLibrary('compare')}>Compare</button>
+                  <button className="ghost-btn" onClick={() => setChatInput(`What should I study after ${selectedTopic}?`)}>↗ Related</button>
                 </div>
-              ) : messages.map((message, index) => (
-                <article key={`${message.role}-${index}`} className={`message ${message.role}`}>
-                  <div className="message-row">
-                    {message.role !== 'user' ? <span className="message-avatar coach">◈</span> : null}
-                    <div className="message-content">
-                      <div className="message-body" dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }} />
-                      <span className="message-time">{formatMessageTime(message.createdAt)}</span>
+                <div className="study-separator" />
+              </div>
+
+              <div className="quick-questions">
+                <div className="quick-questions-label">ASK ABOUT THIS:</div>
+                <div className="quick-chips" id="suggestedQs" role="list" aria-label="Suggested questions">
+                  {(SUGGESTED[selectedTopic] || SUGGESTED.default).map((prompt) => (
+                    <button key={prompt} className="chip" onClick={() => setChatInput(prompt)} role="listitem">
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="conversation" id="panel">
+                <div className="messages" id="chatMessages" ref={chatMessagesRef}>
+                  {!messages.length ? (
+                    <div className="empty-state hero-empty">
+                      <h3>Start with a concept and get a guided explanation.</h3>
+                      <p>Then quiz yourself, save it for later, or compare it to a related idea.</p>
                     </div>
-                    {message.role === 'user' ? <span className="message-avatar user">R</span> : null}
-                  </div>
-                </article>
-              ))}
-              {isLoading && (
-                <div className="message assistant typing">
-                  <div className="message-row">
-                    <span className="message-avatar coach">◈</span>
-                    <div className="typing-row"><span /><span /><span /></div>
-                  </div>
+                  ) : messages.map((message, index) => (
+                    <article key={`${message.role}-${index}`} className={`message ${message.role}`}>
+                      <div className="message-row">
+                        {message.role !== 'user' ? <span className="message-avatar coach">◈</span> : null}
+                        <div className="message-content">
+                          {message.role !== 'user' ? <span className="assistant-label">COACH</span> : null}
+                          <div className="message-body" dangerouslySetInnerHTML={{ __html: markdownToHtml(message.content) }} />
+                          <span className="message-time">{formatMessageTime(message.createdAt)}</span>
+                        </div>
+                        {message.role === 'user' ? <span className="message-avatar user">R</span> : null}
+                      </div>
+                    </article>
+                  ))}
+                  {isLoading && (
+                    <div className="message assistant typing">
+                      <div className="message-row">
+                        <span className="message-avatar coach">◈</span>
+                        <div className="message-content">
+                          <span className="assistant-label">COACH</span>
+                          <div className="typing-row"><span /><span /><span /></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
 
-          <form
-            className="chat-box"
-            onSubmit={(event) => {
-              event.preventDefault();
-              sendMessage();
-            }}
-          >
-            <div className="chat-input-row">
-              <textarea
-                value={chatInput}
-                onChange={(event) => setChatInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    sendMessage();
-                  }
+              <form
+                className="chat-box"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  sendMessage();
                 }}
-                placeholder={selectedTopic ? `Ask a follow-up about ${selectedTopic}…` : 'Select a topic to begin…'}
-                rows={2}
-              />
-              <button className="primary-btn" type="submit" disabled={!selectedTopic || !chatInput.trim() || isLoading}>
-                {isLoading ? 'Thinking…' : 'Send'}
-              </button>
-            </div>
-            <div className="chat-actions">
-              <span className="chat-hint">Enter to send, Shift+Enter for a new line</span>
-            </div>
-          </form>
+              >
+                <div className="chat-input-wrap">
+                  <textarea
+                    id="chatInput"
+                    value={chatInput}
+                    onChange={(event) => setChatInput(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' && !event.shiftKey) {
+                        event.preventDefault();
+                        sendMessage();
+                      }
+                    }}
+                    placeholder={selectedTopic ? `Ask a follow-up about ${selectedTopic}…` : 'Select a topic to begin…'}
+                    rows={2}
+                  />
+                  <button id="sendBtn" className="send-btn" type="submit" disabled={!selectedTopic || !chatInput.trim() || isLoading}>
+                    ↑
+                  </button>
+                </div>
+                <div className="chat-actions">
+                  <span className="chat-hint">ENTER TO SEND  ·  SHIFT+ENTER FOR NEW LINE</span>
+                </div>
+              </form>
+            </>
+          )}
         </section>
       </main>
 
