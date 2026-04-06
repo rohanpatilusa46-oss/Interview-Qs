@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { SignInButton, UserButton, useAuth } from '@clerk/nextjs';
 import { data } from '../lib/data';
+import MockInterviewModal from '../components/MockInterviewModal';
 
 const STORAGE_KEYS = {
   bookmarks: 'mlprep.bookmarks',
   conversations: 'mlprep.conversations',
   quizCache: 'mlprep.quizCache',
   uiMode: 'mlprep.uiMode',
+  theme: 'mlprep.theme',
 };
 
 const SUGGESTED = {
@@ -165,7 +167,9 @@ export default function Page() {
   const [compareA, setCompareA] = useState('');
   const [compareB, setCompareB] = useState('');
   const [compareResult, setCompareResult] = useState('');
+  const [theme, setTheme] = useState('dark');
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [mockInterviewOpen, setMockInterviewOpen] = useState(false);
   const [cloudStateReady, setCloudStateReady] = useState(false);
   const chatMessagesRef = useRef(null);
   const cloudSaveTimerRef = useRef(null);
@@ -200,7 +204,16 @@ export default function Page() {
     setConversations(loadStoredJSON(STORAGE_KEYS.conversations, {}));
     setQuizCache(loadStoredJSON(STORAGE_KEYS.quizCache, {}));
     setCurrentView(window.localStorage.getItem(STORAGE_KEYS.uiMode) || 'learn');
+    const savedTheme = window.localStorage.getItem(STORAGE_KEYS.theme) || 'dark';
+    setTheme(savedTheme === 'light' ? 'light' : 'dark');
   }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const nextTheme = theme === 'light' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    window.localStorage.setItem(STORAGE_KEYS.theme, nextTheme);
+  }, [theme, hydrated]);
 
   useEffect(() => {
     if (!hydrated || userId) return;
@@ -779,6 +792,9 @@ Rules:
                 <button className="sidebar-library-btn" onClick={() => openLibrary('history')}>
                   Library
                 </button>
+                <button className="sidebar-library-btn" onClick={() => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'))}>
+                  {theme === 'dark' ? 'Light' : 'Dark'}
+                </button>
                 {authLoaded && (
                   userId ? (
                     <UserButton appearance={{ elements: { userButtonAvatarBox: 'sidebar-user-avatar' } }} afterSignOutUrl="/" />
@@ -855,6 +871,7 @@ Rules:
                   </button>
                   <button className="ghost-btn" onClick={() => generateQuiz(selectedTopic, 5)}>Quiz me</button>
                   <button className="ghost-btn" onClick={() => openLibrary('compare')}>Compare</button>
+                  <button className="ghost-btn" onClick={() => setMockInterviewOpen(true)}>🎤 Start Mock Interview</button>
                   <button className="ghost-btn" onClick={() => setChatInput(`What should I study after ${selectedTopic}?`)}>↗ Related</button>
                 </div>
                 <div className="study-separator" />
@@ -960,6 +977,13 @@ Rules:
           </div>
         </div>
       )}
+
+      <MockInterviewModal
+        open={mockInterviewOpen}
+        onClose={() => setMockInterviewOpen(false)}
+        subsection={selectedSection || selectedTopic}
+        topic={selectedTopic}
+      />
     </div>
   );
 }
